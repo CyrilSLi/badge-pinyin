@@ -1,0 +1,75 @@
+from badge import BaseApp, display
+from badge.input import get_button, Buttons
+from framebuf import FrameBuffer, MONO_HLSB
+
+def relpath(path):
+    return "/".join(__file__.split("/")[:-1] + [path])
+
+def draw_text(string, x, y, color=0, show=True):
+    mask = (0xFF, 0x00)[color]
+    with open(relpath("zh.bin"), "rb") as f:
+        if all(ord(i) >= 0x3200 and ord(i) < 0xa000 for i in string):
+            for j, i in enumerate(string):
+                arr_index = (ord(i) - 0x3200) * 32
+                f.seek(arr_index)
+                display.blit(FrameBuffer(bytearray(k ^ mask for k in f.read(32)), 16, 16, MONO_HLSB), x + j * 16, y)
+        elif all(ord(i) < 0x80 for i in string):
+            for j, i in enumerate(string):
+                display.text(i, x + 4 + j * 16, y + 4, color)
+        else:
+            raise ValueError("Only Chinese characters are supported")
+    if show:
+        display.show()
+
+search, typed = "", ""
+def display_typed():
+    global search, typed
+    draw_text(typed, 77, 12, show=False)
+    for j, i in enumerate(typed [-60:]):
+        draw_text(i, 77 + (j % 6) * 16, 28 + (j // 6) * 16, show=False)
+
+def select_24(items):
+    page = 0
+    def draw_page():
+        display.fill_rect(0, 0, 51 + 16, 200, 1)
+        count = page * 24
+        for y in (15, 37, 59, 81, 103, 125, 147, 169):
+            for x in (11, 33, 55):
+                if count < len(items):
+                    draw_text(items[count], x, y, show=False)
+                count += 1
+        display.show()
+    draw_page()
+    while True:
+        if get_button(Buttons.SW5):
+            page = (page + 1) % -(len(items) // -24)
+            draw_page()
+            while get_button(Buttons.SW5):
+                pass
+            continue
+        elif get_button(Buttons.SW4):
+            while get_button(Buttons.SW4):
+                pass
+            return None
+        for j, i in enumerate((Buttons.SW15, Buttons.SW8, Buttons.SW16)):
+            if get_button(i):
+                for l, k in enumerate((Buttons.SW9, Buttons.SW18, Buttons.SW10, Buttons.SW17, Buttons.SW7, Buttons.SW13, Buttons.SW6, Buttons.SW14)):
+                    if get_button(k):
+                        while get_button(i) or get_button(k):
+                            pass
+                        if page * 24 + l * 3 + j < len(items):
+                            return items[page * 24 + l * 3 + j]
+
+class App (BaseApp):
+    def on_open(self):
+        display.fill(1)
+        #select_24(list(b'\xe6\x97\xa9\xe4\xb8\x8a\xe5\xa5\xbd\xe4\xb8\xad\xe5\x9b\xbd\xe7\x8e\xb0\xe5\x9c\xa8\xe6\x88\x91\xe6\x9c\x89\xe5\x86\xb0\xe6\xb7\x87\xe6\xb7\x8bABCDEFGHIJKL'.decode()))
+
+    def loop(self):
+        global search, typed
+        letter, search, typed = "", "", ""
+        while letter is not None and len(search) < 6:
+            search += letter
+            letter = select_24(list("ABCDEFGHIJKLMNOPQRSTWXYZ"))
+        
+        print(select_24(list ("AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")))
