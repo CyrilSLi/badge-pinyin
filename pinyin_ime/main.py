@@ -24,20 +24,22 @@ def draw_text(string, x, y, color=0, show=True):
 search, typed = "", ""
 def display_typed():
     global search, typed
-    draw_text(typed, 77, 12, show=False)
+    display.fill_rect(77, 0, 200 - 77, 200, 1)
+    draw_text(search, 77, 12, show=False)
     for j, i in enumerate(typed [-60:]):
         draw_text(i, 77 + (j % 6) * 16, 28 + (j // 6) * 16, show=False)
 
 def select_24(items):
     page = 0
     def draw_page():
-        display.fill_rect(0, 0, 51 + 16, 200, 1)
+        display.fill_rect(0, 0, 55 + 16, 200, 1)
         count = page * 24
         for y in (15, 37, 59, 81, 103, 125, 147, 169):
             for x in (11, 33, 55):
                 if count < len(items):
                     draw_text(items[count], x, y, show=False)
                 count += 1
+        display_typed()
         display.show()
     draw_page()
     while True:
@@ -62,14 +64,26 @@ def select_24(items):
 
 class App (BaseApp):
     def on_open(self):
+        global typed
+        typed = ""
         display.fill(1)
-        #select_24(list(b'\xe6\x97\xa9\xe4\xb8\x8a\xe5\xa5\xbd\xe4\xb8\xad\xe5\x9b\xbd\xe7\x8e\xb0\xe5\x9c\xa8\xe6\x88\x91\xe6\x9c\x89\xe5\x86\xb0\xe6\xb7\x87\xe6\xb7\x8bABCDEFGHIJKL'.decode()))
 
     def loop(self):
         global search, typed
-        letter, search, typed = "", "", ""
+        letter, search = "", ""
         while letter is not None and len(search) < 6:
             search += letter
-            letter = select_24(list("ABCDEFGHIJKLMNOPQRSTWXYZ"))
-        
-        print(select_24(list ("AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")))
+            letter = select_24(list("ABCDEFGHIJKLMNOPQRST_XYZ".replace("_", "W" if search == "" else "U")))
+        if search == "":
+            return
+        search += select_24(list("111222333444111222333444")) or ""
+        search = search.lower()
+        with open(relpath("pinyin.txt")) as f:
+            line = None
+            while line != "":
+                line = f.readline().strip()
+                if line.startswith(search + " "):
+                    break
+            else:
+                return
+        typed += select_24(line.split(" ")[1]) or ""
