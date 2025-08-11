@@ -75,6 +75,7 @@ class App (BaseApp):
             search += letter
             letter = select_24(list("ABCDEFGHIJKLMNOPQRST_XYZ".replace("_", "W" if search == "" else "U")))
         if search == "":
+            typed = typed[:-1]
             return
         search += select_24(list("111222333444111222333444")) or ""
         search = search.lower()
