@@ -26,8 +26,8 @@ def display_typed():
     global search, typed
     display.fill_rect(77, 0, 200 - 77, 200, 1)
     draw_text(search, 77, 12, show=False)
-    for j, i in enumerate(typed [-60:]):
-        draw_text(i, 77 + (j % 6) * 16, 28 + (j // 6) * 16, show=False)
+    for j, i in enumerate(typed [-70:]):
+        draw_text(i, 77 + (j % 7) * 16, 28 + (j // 7) * 16, show=False)
 
 def select_24(items):
     page = 0
