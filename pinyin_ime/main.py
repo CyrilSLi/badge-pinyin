@@ -44,8 +44,9 @@ def select_24(items):
     draw_page()
     while True:
         if get_button(Buttons.SW5):
-            page = (page + 1) % -(len(items) // -24)
-            draw_page()
+            if len(items) > 24:
+                page = (page + 1) % -(len(items) // -24)
+                draw_page()
             while get_button(Buttons.SW5):
                 pass
             continue
@@ -71,20 +72,20 @@ class App (BaseApp):
     def loop(self):
         global search, typed
         letter, search = "", ""
-        while letter is not None and len(search) < 6:
+        while True:
+            letter = select_24(list("ABCDEFGHIJKLMNOPQRSTWXYZ" if search == "" else "ABCDEFGHI KL1NO2QR3TU4YZ"))
+            if letter is None:
+                if search == "":
+                    typed = typed[:-1]
+                return
             search += letter
-            letter = select_24(list("ABCDEFGHIJKLMNOPQRST_XYZ".replace("_", "W" if search == "" else "U")))
-        if search == "":
-            typed = typed[:-1]
-            return
-        search += select_24(list("111222333444111222333444")) or ""
-        search = search.lower()
+            if search[-1] in " 1234" or len(search) == 7:
+                search = search.strip().lower()
+                break
         with open(relpath("pinyin.txt")) as f:
-            line = None
-            while line != "":
-                line = f.readline().strip()
-                if line.startswith(search + " "):
+            for i in f:
+                if i.startswith(search + " "):
                     break
             else:
                 return
-        typed += select_24(line.split(" ")[1]) or ""
+        typed += select_24(i.split(" ")[1].strip()) or ""
